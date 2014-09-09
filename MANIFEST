@@ -6,3 +6,4 @@ Makefile.PL
 README
 dist.ini
 lib/Dancer/Session/Memcached/JSON.pm
+lib/Dancer/Session/Memcached/JSON/Signature.pm

@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Dancer::Session::Memcached::JSON;
 
-our $VERSION = '0.001'; # VERSION
+our $VERSION = '0.002'; # VERSION
 # ABSTRACT: Session store in memcached with JSON serialization
 
 use base 'Dancer::Session::Abstract';
@@ -10,17 +10,20 @@ use base 'Dancer::Session::Abstract';
 use JSON;
 use Cache::Memcached;
 use Function::Parameters qw(:strict);
-use Storable qw(dclone);
-use Data::Structure::Util qw(unbless);
 use Dancer::Config qw(setting);
 
+use Dancer::Session::Memcached::JSON::Signature qw(sign unsign);
+
 my $MEMCACHED;
+my $secret;
 
 sub init {
     my ($class) = @_;
     my @servers = split ',', (setting('memcached_servers') // '');
 
     $class->SUPER::init;
+    $secret = setting('memcached_secret');
+
     if(!@servers or grep { not $_ =~ /^\d+\.\d+\.\d+\.\d+:\d+$/ } @servers) {
         die "Invalid value for memcached_servers. Should be a comma " .
                 "separated list of the form `server:port'";
@@ -29,40 +32,64 @@ sub init {
     $MEMCACHED = Cache::Memcached->new(servers => \@servers);
 }
 
-method TO_JSON {
-    return unbless(dclone($self));
+method update() {
+    my $id = $secret
+        ? unsign($self->id, $secret)
+        : $self->id;
+
+    my $data = {
+        cookie => {
+            path           => setting('session_cookie_path') // '/',
+            httpOnly       => setting('session_is_http_only') // JSON::true,
+            expires        => setting('session_expires'),
+            originalMaxAge => undef
+        },
+    };
+
+    map {
+        $data->{$_} = $self->{$_};
+    } keys %$self;
+
+    $MEMCACHED->set($id, to_json $data);
+    return $self;
 }
 
 fun create(Str $class) {
     my $self = $class->new;
 
-    $MEMCACHED->set($self->id => to_json($self, {
-        allow_blessed   => 1,
-        convert_blessed => 1,
-    }));
+    $self->{id} = sign($self->id, $secret)
+        if $secret;
 
-    return $self;
+    return $self->update;
 }
 
 fun retrieve(Str $class, Str|Int $id) {
-    my $val = $MEMCACHED->get($id);
+    my $mid = $secret
+        ? unsign($id, $secret)
+        : $id;
 
-    $val
-        ? bless(from_json($val), $class)
-        : create($class);
+    my $val = $MEMCACHED->get($mid);
+
+    if($val) {
+        $val = bless(from_json($val), $class);
+        $val->{id} = $id;
+    } else {
+        $val = create($class);
+    }
+
+    return $val;
 }
 
 method destroy() {
-    $MEMCACHED->delete($self->id);
+    my $id = $secret
+        ? unsign($self->id, $secret)
+        : $self->id;
+
+    $MEMCACHED->delete($id);
 }
 
 method flush() {
-    $MEMCACHED->set($self->id => to_json($self, {
-        allow_blessed   => 1,
-        convert_blessed => 1,
-    }));
-
-    return $self;
+    return $self->update;
 }
 
 1;
@@ -75,7 +102,7 @@ Dancer::Session::Memcached::JSON - Session store in memcached with JSON serializ
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 SYNOPSIS
 
@@ -88,6 +115,10 @@ This module implements a session store on top of Memcached. All data is
 converted to JSON before being sent to Memcached, which prevents invocations of
 C<Storable::nfreeze>. This common format allows the data to be shared among web
 applications written in different languages.
+
+If C<memcached_secret> is specified, all generated session IDs will be of the
+form C<id.base64_mac>. This is to maintain compatibility with the session store
+mechanism that L<Express|http://expressjs.com/> uses.
 
 =head1 NAME
 
