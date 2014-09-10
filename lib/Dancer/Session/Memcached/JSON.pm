@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Dancer::Session::Memcached::JSON;
 
-our $VERSION = '0.002'; # VERSION
+our $VERSION = '0.003'; # VERSION
 # ABSTRACT: Session store in memcached with JSON serialization
 
 use base 'Dancer::Session::Abstract';
@@ -24,7 +24,7 @@ sub init {
     $class->SUPER::init;
     $secret = setting('memcached_secret');
 
-    if(!@servers or grep { not $_ =~ /^\d+\.\d+\.\d+\.\d+:\d+$/ } @servers) {
+    if(!@servers) {
         die "Invalid value for memcached_servers. Should be a comma " .
                 "separated list of the form `server:port'";
     }
@@ -102,7 +102,7 @@ Dancer::Session::Memcached::JSON - Session store in memcached with JSON serializ
 
 =head1 VERSION
 
-version 0.002
+version 0.003
 
 =head1 SYNOPSIS
 

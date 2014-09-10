@@ -40,7 +40,7 @@ Dancer::Session::Memcached::JSON::Signature
 
 =head1 VERSION
 
-version 0.002
+version 0.003
 
 =head1 AUTHOR
 
