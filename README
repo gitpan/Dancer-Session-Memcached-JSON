@@ -1,7 +1,7 @@
 
 
 This archive contains the distribution Dancer-Session-Memcached-JSON,
-version 0.004:
+version 0.005:
 
   Session store in memcached with JSON serialization
 
