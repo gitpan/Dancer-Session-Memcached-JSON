@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Dancer::Session::Memcached::JSON;
 
-our $VERSION = '0.003'; # VERSION
+our $VERSION = '0.004'; # VERSION
 # ABSTRACT: Session store in memcached with JSON serialization
 
 use base 'Dancer::Session::Abstract';
@@ -10,6 +10,7 @@ use base 'Dancer::Session::Abstract';
 use JSON;
 use Cache::Memcached;
 use Function::Parameters qw(:strict);
+use Encode qw(encode_utf8 decode_utf8);
 use Dancer::Config qw(setting);
 
 use Dancer::Session::Memcached::JSON::Signature qw(sign unsign);
@@ -50,7 +51,7 @@ method update() {
         $data->{$_} = $self->{$_};
     } keys %$self;
 
-    $MEMCACHED->set($id, to_json $data);
+    $MEMCACHED->set($id, encode_utf8 to_json $data);
     return $self;
 }
 
@@ -71,7 +72,7 @@ fun retrieve(Str $class, Str|Int $id) {
     my $val = $MEMCACHED->get($mid);
 
     if($val) {
-        $val = bless(from_json($val), $class);
+        $val = bless(decode_utf8(from_json($val)), $class);
         $val->{id} = $id;
     } else {
         $val = create($class);
@@ -102,7 +103,7 @@ Dancer::Session::Memcached::JSON - Session store in memcached with JSON serializ
 
 =head1 VERSION
 
-version 0.003
+version 0.004
 
 =head1 SYNOPSIS
 

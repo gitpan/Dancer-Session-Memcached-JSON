@@ -25,6 +25,7 @@ my %WriteMakefileArgs = (
     "Dancer::Config" => 0,
     "Dancer::Session::Abstract" => 0,
     "Digest::SHA" => 0,
+    "Encode" => 0,
     "Exporter" => 0,
     "Function::Parameters" => 0,
     "JSON" => 0,
@@ -33,7 +34,7 @@ my %WriteMakefileArgs = (
     "warnings" => 0
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.003",
+  "VERSION" => "0.004",
   "test" => {
     "TESTS" => ""
   }
@@ -45,6 +46,7 @@ my %FallbackPrereqs = (
   "Dancer::Config" => 0,
   "Dancer::Session::Abstract" => 0,
   "Digest::SHA" => 0,
+  "Encode" => 0,
   "Exporter" => 0,
   "Function::Parameters" => 0,
   "JSON" => 0,

@@ -17,10 +17,11 @@ requires:
   Dancer::Config: 0
   Dancer::Session::Abstract: 0
   Digest::SHA: 0
+  Encode: 0
   Exporter: 0
   Function::Parameters: 0
   JSON: 0
   base: 0
   strict: 0
   warnings: 0
-version: 0.003
+version: 0.004
